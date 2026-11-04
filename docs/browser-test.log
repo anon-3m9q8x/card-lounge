@@ -1,0 +1,1 @@
+PASS: playable solo completion and one-time record/ranking, CPU play, pause/resume and mismatch timer, save/quit, 52-card layout and >=44px cards on small screens, skins persisted, both themes at320/390/820/1440px, future-save protection, cross-tab conflict protection; no JS errors.

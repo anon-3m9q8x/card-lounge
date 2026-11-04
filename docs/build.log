@@ -1,0 +1,13 @@
+
+> card-lounge@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v7.2.2 building client environment for production...
+transforming...
+✓ 35 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.70 kB │ gzip:  0.47 kB
+dist/assets/index-BzV1EnKr.css   26.36 kB │ gzip:  6.36 kB
+dist/assets/index-BebnhsOW.js   231.29 kB │ gzip: 73.18 kB
+✓ built in 738ms
