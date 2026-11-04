@@ -1,0 +1,1 @@
+PASS: all5 game entries; new4 playable, draw/Undo, hidden-card labels, CPU turns, 4 independent saves and reload/resume, Speed321 countdown,320/390/820/1440px light/dark, all4 end-game UI and idempotent records; no JS errors.

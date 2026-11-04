@@ -1968,3 +1968,539 @@ footer > span:first-child {
     animation: none !important;
   }
 }
+/* Five-game tables: shared paper cards and accessible button destinations. */
+.other-table {
+  min-height: 400px;
+}
+.other-table .table-instruction {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #d2dfd4;
+  margin: 14px 0;
+  text-align: center;
+}
+.other-table .playing-card,
+.other-table .empty-card,
+.other-table .stock-button {
+  width: 72px;
+  aspect-ratio: 5/7;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.other-table .playing-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: top;
+}
+.other-table .card-corner {
+  font-size: 20px;
+}
+.other-table .card-pip {
+  font-size: 38px;
+}
+.card-selected {
+  outline: 3px solid #f1cf7d;
+  outline-offset: 3px;
+  box-shadow: 0 0 18px #f1cf7d55 !important;
+}
+.empty-card {
+  border: 1px dashed #d8c78f66;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d6d2b3a3;
+  font:
+    24px Georgia,
+    serif;
+  background: #0000000c;
+}
+.stock-button {
+  display: block;
+  position: relative;
+  border: 1px solid #e5ddc1;
+  background: #e8e0cc;
+  padding: 0;
+  border-radius: 7px;
+  color: #2d503d;
+  font-size: 30px;
+}
+.kl-scroll,
+.sevens-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 5px 5px 15px;
+  scrollbar-width: thin;
+  scrollbar-color: #bca26a66 transparent;
+}
+.kl-board {
+  min-width: 620px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.kl-top,
+.kl-columns {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 14px;
+}
+.kl-top {
+  align-items: start;
+  margin-bottom: 24px;
+}
+.kl-slot > span {
+  display: block;
+  font-size: 10px;
+  color: #d2dfd4;
+  margin-bottom: 10px;
+}
+.destination {
+  width: 100%;
+  font-size: 10px;
+  min-height: 44px;
+  padding: 6px 4px;
+  background: #ffffff12;
+  color: #e5e8d8;
+  border-color: #c9bc8a44;
+  margin-bottom: 10px;
+  white-space: nowrap;
+}
+.destination:disabled {
+  opacity: 0.55;
+}
+.selected-column {
+  border-color: #f1cf7d;
+  color: #f1cf7d;
+}
+.kl-stack {
+  position: relative;
+  min-height: 144px;
+}
+.stack-card {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 72px;
+}
+.kl-stack .playing-card:focus-visible {
+  z-index: 5;
+  position: relative;
+}
+.kl-column {
+  min-width: 0;
+}
+.opponent-grid {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 20px 0 25px;
+}
+.opponent {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+  min-width: 115px;
+  padding: 13px 18px;
+  border: 1px solid #bcb98b44;
+  border-radius: 10px;
+  background: #0002;
+  color: #dce5da;
+}
+.opponent strong {
+  font-size: 21px;
+  font-weight: 500;
+  color: #f4e4b6;
+}
+.opponent span {
+  font-size: 12px;
+}
+.opponent small {
+  font-size: 9px;
+  color: #c8d7cc;
+}
+.opponent.is-turn {
+  border-color: #d9be7a;
+  background: #bda15b15;
+}
+.table-turn {
+  text-align: center;
+  color: #e8e8d7;
+  font-size: 16px;
+  margin: 18px 0 20px;
+}
+.draw-row,
+.hand-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+.hand-label {
+  text-align: center;
+  color: #d8decc;
+  font-size: 12px;
+  margin: 26px 0 14px;
+}
+.table-pass {
+  display: block;
+  margin: 20px auto 10px;
+  background: #f0e5bd;
+  color: #253c2b;
+  border-color: #cdb577;
+  min-height: 44px;
+  font-size: 12px;
+}
+.sevens-board {
+  min-width: 730px;
+  max-width: 1000px;
+  margin: auto;
+}
+.seven-lane {
+  display: grid;
+  grid-template-columns: 24px repeat(13, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+.seven-lane > span {
+  color: #f4edcc;
+  font-size: 25px;
+  text-align: center;
+}
+.seven-lane .lane-red {
+  color: #ffb1a6;
+}
+.seven-slot {
+  aspect-ratio: 5/7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0002;
+  border: 1px dashed #cfc79133;
+  border-radius: 5px;
+  color: #d5d2ae66;
+  font:
+    15px Georgia,
+    serif;
+}
+.seven-slot .playing-card {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  min-height: 0;
+}
+.seven-slot .card-corner {
+  font-size: 12px;
+  top: 4px;
+  left: 4px;
+}
+.seven-slot .card-corner.bottom {
+  top: auto;
+  left: auto;
+  bottom: 4px;
+  right: 4px;
+}
+.seven-slot .card-pip {
+  font-size: 24px;
+}
+.seven-center {
+  box-shadow: 0 0 0 1px #d9c57888;
+}
+.legal-card .playing-card {
+  outline: 2px solid #c1df9f;
+  outline-offset: 2px;
+  box-shadow: 0 0 14px #c5de9f22;
+}
+.speed-visible {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 22px 0;
+}
+.speed-centers {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  margin: 25px 0 35px;
+}
+.center-slot {
+  text-align: center;
+}
+.center-slot > span {
+  display: block;
+  font-size: 11px;
+  color: #d3dfd5;
+  margin-bottom: 13px;
+}
+.speed-centers .playing-card {
+  width: 95px;
+}
+.legal-center .playing-card {
+  outline: 3px solid #f1d088;
+  box-shadow: 0 0 25px #dfc78044;
+  outline-offset: 5px;
+}
+.speed-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  font-size: 12px;
+  color: #cfdbcf;
+  flex-wrap: wrap;
+}
+.speed-info strong {
+  font-size: 18px;
+  font-weight: 500;
+  color: #f6dfad;
+  padding: 0 4px;
+}
+.speed-info .table-pass {
+  margin: 0;
+}
+.other-table .pause-overlay > span {
+  font-size: 52px;
+  font-family: Georgia, serif;
+}
+.resume-game-button {
+  width: 100%;
+  margin-top: 9px;
+  font-size: 11px;
+  background: transparent;
+  color: var(--gold);
+}
+@media (min-width: 1500px) {
+  .other-table .playing-card,
+  .other-table .empty-card,
+  .other-table .stock-button {
+    width: 84px;
+  }
+  .stack-card {
+    width: 84px;
+  }
+  .kl-board {
+    max-width: 1000px;
+    min-width: 720px;
+  }
+  .speed-centers .playing-card {
+    width: 110px;
+  }
+  .seven-slot .playing-card {
+    width: 100%;
+  }
+}
+@media (max-width: 900px) {
+  .other-table {
+    padding: 20px 13px;
+  }
+  .other-table .playing-card,
+  .other-table .empty-card,
+  .other-table .stock-button {
+    width: 62px;
+  }
+  .stack-card {
+    width: 62px;
+  }
+  .kl-board {
+    min-width: 540px;
+  }
+  .kl-top,
+  .kl-columns {
+    gap: 10px;
+  }
+  .seven-slot .playing-card {
+    width: 100%;
+  }
+  .sevens-board {
+    min-width: 680px;
+  }
+  .speed-visible {
+    gap: 14px;
+  }
+  .speed-centers .playing-card {
+    width: 88px;
+  }
+}
+@media (max-width: 767px) {
+  .other-table {
+    padding: 18px 10px;
+    min-height: 360px;
+  }
+  .other-table .table-instruction {
+    font-size: 10px;
+    margin: 13px 4px;
+  }
+  .other-table .playing-card,
+  .other-table .empty-card,
+  .other-table .stock-button {
+    width: 56px;
+    min-height: 44px;
+  }
+  .other-table .card-corner {
+    font-size: 16px;
+  }
+  .other-table .card-pip {
+    font-size: 30px;
+  }
+  .stack-card {
+    width: 56px;
+  }
+  .kl-board {
+    min-width: 485px;
+  }
+  .kl-top,
+  .kl-columns {
+    gap: 10px;
+  }
+  .destination {
+    font-size: 9px;
+    padding: 5px 2px;
+  }
+  .kl-slot > span {
+    font-size: 9px;
+  }
+  .kl-top {
+    margin-bottom: 17px;
+  }
+  .kl-scroll {
+    padding: 4px 3px 15px;
+  }
+  .opponent-grid {
+    gap: 8px;
+    margin: 12px 0 18px;
+  }
+  .opponent {
+    min-width: 76px;
+    flex: 1;
+    padding: 10px 8px;
+  }
+  .opponent span {
+    font-size: 10px;
+  }
+  .opponent strong {
+    font-size: 18px;
+  }
+  .opponent small {
+    font-size: 8px;
+  }
+  .table-turn {
+    font-size: 13px;
+    line-height: 1.9;
+  }
+  .hand-label {
+    font-size: 11px;
+  }
+  .draw-row,
+  .hand-row {
+    gap: 8px;
+    margin: 15px 0;
+  }
+  .table-pass {
+    font-size: 11px;
+    padding: 9px 12px;
+  }
+  .sevens-board {
+    min-width: 660px;
+  }
+  .seven-lane {
+    grid-template-columns: 20px repeat(13, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .seven-slot .playing-card {
+    width: 100%;
+    min-height: 0;
+  }
+  .seven-slot .card-corner {
+    font-size: 10px;
+    top: 3px;
+    left: 3px;
+  }
+  .seven-slot .card-corner.bottom {
+    right: 3px;
+    bottom: 3px;
+    top: auto;
+    left: auto;
+  }
+  .seven-slot .card-pip {
+    font-size: 22px;
+  }
+  .seven-lane > span {
+    font-size: 22px;
+  }
+  .speed-visible {
+    gap: 11px;
+    margin: 20px 0;
+  }
+  .speed-centers {
+    gap: 45px;
+    margin: 24px 0 30px;
+  }
+  .speed-centers .playing-card {
+    width: 78px;
+  }
+  .speed-info {
+    font-size: 11px;
+    gap: 16px;
+  }
+  .speed-info strong {
+    font-size: 16px;
+  }
+  .center-slot > span {
+    font-size: 10px;
+  }
+  .other-table .pause-overlay {
+    padding: 22px 14px;
+  }
+  .other-table .pause-overlay h2 {
+    font-size: 21px;
+  }
+  .resume-game-button {
+    font-size: 10px;
+    padding: 8px 5px;
+  }
+}
+@media (max-width: 359px) {
+  .other-table .playing-card,
+  .other-table .empty-card,
+  .other-table .stock-button {
+    width: 50px;
+  }
+  .stack-card {
+    width: 50px;
+  }
+  .speed-visible {
+    gap: 9px;
+  }
+  .speed-centers .playing-card {
+    width: 72px;
+  }
+  .seven-slot .playing-card {
+    width: 100%;
+  }
+  .opponent {
+    min-width: 65px;
+    padding: 9px 5px;
+  }
+}
+.scroll-note {
+  display: none;
+}
+.kl-scroll:focus-visible,
+.sevens-scroll:focus-visible {
+  outline: 2px solid #f1cf7d;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+@media (max-width: 900px) {
+  .scroll-note {
+    display: block;
+    text-align: center;
+    font-size: 10px;
+    color: #d5dbbc;
+    margin: 8px 0;
+  }
+}

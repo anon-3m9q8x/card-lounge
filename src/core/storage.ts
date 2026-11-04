@@ -1,9 +1,13 @@
+import { validTableSession } from "../games/table/validate.ts";
+import { tableConfigLabel } from "../games/engine.ts";
+import type { GameSession } from "../games/engine.ts";
 import type {
   Settings,
   StoredData,
   MemorySession,
   MemoryConfig,
   GameRecord,
+  MemoryGameRecord,
 } from "../app/types.ts";
 import { makeDeck, pairKey } from "./cards.ts";
 export const STORAGE_KEY = "card-lounge:v1";
@@ -217,8 +221,10 @@ function validRecord(v: unknown): v is GameRecord {
   return (
     object(v) &&
     typeof v.sessionId === "string" &&
-    v.gameId === "memory" &&
-    config(v.config) &&
+    ((v.gameId === "memory" && config(v.config)) ||
+      (["klondike", "oldMaid", "sevens", "speed"].includes(String(v.gameId)) &&
+        object(v.config) &&
+        ["easy", "normal", "hard"].includes(String(v.config.difficulty)))) &&
     typeof v.configLabel === "string" &&
     ["completed", "win", "loss", "draw"].includes(String(v.outcome)) &&
     time(v.elapsedMs) &&
@@ -246,7 +252,13 @@ export function decodeStored(raw: string | null): {
     if (
       !validSettings(v.settings) ||
       !object(v.saves) ||
-      Object.keys(v.saves).some((k) => k !== "memory") ||
+      Object.entries(v.saves).some(
+        ([k, slot]) =>
+          !["memory", "klondike", "oldMaid", "sevens", "speed"].includes(k) ||
+          !(validSession(slot) || validTableSession(slot)) ||
+          slot.gameId !== k ||
+          slot.phase !== "paused",
+      ) ||
       (v.saves.memory !== undefined &&
         (!validSession(v.saves.memory) || v.saves.memory.phase !== "paused")) ||
       !Array.isArray(v.records) ||
@@ -293,7 +305,7 @@ export const configLabel = (c: MemorySession["config"]): string =>
   `${c.pairs}ペア / ${c.mode === "solo" ? "1人" : `CPU・${{ easy: "初級", normal: "中級", hard: "上級" }[c.difficulty ?? "normal"]}`}`;
 export function recordFinished(
   data: StoredData,
-  session: MemorySession,
+  session: GameSession,
 ): StoredData {
   if (
     !session.result ||
@@ -303,19 +315,30 @@ export function recordFinished(
     return data;
   const result = session.result;
   const next = structuredClone(data);
-  delete next.saves.memory;
-  next.records.push({
+  delete next.saves[session.gameId];
+  const common = {
     sessionId: session.sessionId,
-    gameId: "memory",
-    config: session.config,
-    configLabel: configLabel(session.config),
     outcome: result.outcome,
     elapsedMs: result.elapsedMs,
     hints: session.hintCount,
     assisted: session.assistUsed,
     stats: result.stats,
     finishedAt: result.finishedAt,
-  });
+  };
+  if (session.gameId === "memory")
+    next.records.push({
+      ...common,
+      gameId: "memory",
+      config: session.config,
+      configLabel: configLabel(session.config),
+    });
+  else
+    next.records.push({
+      ...common,
+      gameId: session.gameId,
+      config: session.config,
+      configLabel: tableConfigLabel(session.gameId, session.config),
+    });
   next.records = next.records.slice(-500);
   next.processedSessionIds = [
     ...next.processedSessionIds,
@@ -326,8 +349,9 @@ export function recordFinished(
 export function ranking(
   records: readonly GameRecord[],
   config: MemoryConfig,
-): GameRecord[] {
+): MemoryGameRecord[] {
   return records
+    .filter((r): r is MemoryGameRecord => r.gameId === "memory")
     .filter(
       (r) =>
         configLabel(r.config) === configLabel(config) &&

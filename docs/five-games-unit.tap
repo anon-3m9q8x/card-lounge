@@ -1,0 +1,164 @@
+
+> card-lounge@0.1.0 test
+> node --test --experimental-strip-types --test-reporter=tap tests/*.test.ts
+
+TAP version 13
+# Subtest: 52/53 cards: unique IDs, one joker, same-color pair keys and A/K wrap
+ok 1 - 52/53 cards: unique IDs, one joker, same-color pair keys and A/K wrap
+  ---
+  duration_ms: 1.014396
+  type: 'test'
+  ...
+# Subtest: 100 seeded shuffles preserve cards and reproducibility
+ok 2 - 100 seeded shuffles preserve cards and reproducibility
+  ---
+  duration_ms: 6.692897
+  type: 'test'
+  ...
+# Subtest: 100 seeds × 3 pair counts × 4 solo/CPU configurations have valid distributions
+ok 3 - 100 seeds × 3 pair counts × 4 solo/CPU configurations have valid distributions
+  ---
+  duration_ms: 1023.082698
+  type: 'test'
+  ...
+# Subtest: mismatch blocks third card, resolution switches only CPU mode
+ok 4 - mismatch blocks third card, resolution switches only CPU mode
+  ---
+  duration_ms: 3.3305
+  type: 'test'
+  ...
+# Subtest: same tile twice is rejected; matching pair keeps the player turn
+ok 5 - same tile twice is rejected; matching pair keeps the player turn
+  ---
+  duration_ms: 1.334738
+  type: 'test'
+  ...
+# Subtest: pause/snapshot/resume preserve mismatch and exclude stopped time
+ok 6 - pause/snapshot/resume preserve mismatch and exclude stopped time
+  ---
+  duration_ms: 1.498885
+  type: 'test'
+  ...
+# Subtest: CPU observation and choice do not depend on undisclosed card identities
+ok 7 - CPU observation and choice do not depend on undisclosed card identities
+  ---
+  duration_ms: 1.443091
+  type: 'test'
+  ...
+# Subtest: CPU memory capacity: easy2 / normal6 / hard all observed
+ok 8 - CPU memory capacity: easy2 / normal6 / hard all observed
+  ---
+  duration_ms: 6.597193
+  type: 'test'
+  ...
+# Subtest: CPU can finish a complete 26-pair game with no invalid transitions or duplicate cards
+ok 9 - CPU can finish a complete 26-pair game with no invalid transitions or duplicate cards
+  ---
+  duration_ms: 49.996642
+  type: 'test'
+  ...
+# Subtest: completion records once, separates assisted ranking, and blocks further play
+ok 10 - completion records once, separates assisted ranking, and blocks further play
+  ---
+  duration_ms: 6.690283
+  type: 'test'
+  ...
+# Subtest: corrupt/future saves are protected; valid snapshot restores; duplicate cards rejected
+ok 11 - corrupt/future saves are protected; valid snapshot restores; duplicate cards rejected
+  ---
+  duration_ms: 2.08087
+  type: 'test'
+  ...
+# Subtest: 100 seeds for all four games: valid initial distribution and paused save round trips
+ok 12 - 100 seeds for all four games: valid initial distribution and paused save round trips
+  ---
+  duration_ms: 341.470296
+  type: 'test'
+  ...
+# Subtest: Klondike draw/redeal order and max 10 Undo frames, stopped clock is not rewound
+ok 13 - Klondike draw/redeal order and max 10 Undo frames, stopped clock is not rewound
+  ---
+  duration_ms: 17.055464
+  type: 'test'
+  ...
+# Subtest: Klondike legal sequence moves, same color/empty non-K reject, and foundation returns
+ok 14 - Klondike legal sequence moves, same color/empty non-K reject, and foundation returns
+  ---
+  duration_ms: 1.005051
+  type: 'test'
+  ...
+# Subtest: Klondike foundation Ace and auto-flip, visible-only hint, completion and idempotent record
+ok 15 - Klondike foundation Ace and auto-flip, visible-only hint, completion and idempotent record
+  ---
+  duration_ms: 2.311477
+  type: 'test'
+  ...
+# Subtest: Old Maid removes all rank pairs but never Joker
+ok 16 - Old Maid removes all rank pairs but never Joker
+  ---
+  duration_ms: 0.261583
+  type: 'test'
+  ...
+# Subtest: Old Maid: 40 complete games, 53 IDs retained, wrong turn/index reject and hidden-card uniform selection
+ok 17 - Old Maid: 40 complete games, 53 IDs retained, wrong turn/index reject and hidden-card uniform selection
+  ---
+  duration_ms: 612.083595
+  type: 'test'
+  ...
+# Subtest: Sevens: starts after diamond7 owner, boundaries and 3 voluntary passes vs unlimited forced pass
+ok 18 - Sevens: starts after diamond7 owner, boundaries and 3 voluntary passes vs unlimited forced pass
+  ---
+  duration_ms: 1.737093
+  type: 'test'
+  ...
+# Subtest: Sevens: 60 completed games across difficulty levels without stalls or hidden-hand decisions
+ok 19 - Sevens: 60 completed games across difficulty levels without stalls or hidden-hand decisions
+  ---
+  duration_ms: 1421.148597
+  type: 'test'
+  ...
+# Subtest: Speed atomic placement rejects stale move, immediate replenishment, A/K wrap
+ok 20 - Speed atomic placement rejects stale move, immediate replenishment, A/K wrap
+  ---
+  duration_ms: 1.301097
+  type: 'test'
+  ...
+# Subtest: Speed: 60 complete games across 3 difficulties, 52 IDs maintained through resets and wins
+ok 21 - Speed: 60 complete games across 3 difficulties, 52 IDs maintained through resets and wins
+  ---
+  duration_ms: 692.059569
+  type: 'test'
+  ...
+# Subtest: all games pause/resume preserve clocks, invalid cross-game actions and corrupt saves reject
+ok 22 - all games pause/resume preserve clocks, invalid cross-game actions and corrupt saves reject
+  ---
+  duration_ms: 3.870712
+  type: 'test'
+  ...
+# Subtest: Speed reset retains old centers, supports one reserve and settles equal empty-reserve stalemate
+ok 23 - Speed reset retains old centers, supports one reserve and settles equal empty-reserve stalemate
+  ---
+  duration_ms: 1.331864
+  type: 'test'
+  ...
+# Subtest: Old Maid CPU selects a position independently of the target hidden identity
+ok 24 - Old Maid CPU selects a position independently of the target hidden identity
+  ---
+  duration_ms: 101.887324
+  type: 'test'
+  ...
+# Subtest: legacy memory data survives adding all four saves, and duplicate-card saves reject for every game
+ok 25 - legacy memory data survives adding all four saves, and duplicate-card saves reject for every game
+  ---
+  duration_ms: 6.28247
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3315.905102

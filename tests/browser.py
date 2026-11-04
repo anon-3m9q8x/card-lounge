@@ -5,7 +5,7 @@ from pathlib import Path
 import json
 root=Path(__file__).resolve().parents[1];(root/'docs/screenshots').mkdir(exist_ok=True)
 with sync_playwright() as p:
- browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox']);context=browser.new_context(viewport={'width':1440,'height':1000});page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(BASE_URL);assert page.locator('.game-card').count()==5;assert page.locator('.game-card.available').count()==1
+ browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox']);context=browser.new_context(viewport={'width':1440,'height':1000});page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(BASE_URL);assert page.locator('.game-card').count()==5;assert page.locator('.game-card.available').count()==5
  page.screenshot(path=str(root/'docs/screenshots/home-dark.png'),full_page=True)
  page.get_by_role('button',name='神経衰弱をはじめる').focus();page.keyboard.press('Enter');page.get_by_role('button',name='この設定ではじめる').focus();page.keyboard.press('Space');assert page.locator('.playing-card').count()==16
  assert all('裏向きカード' in x for x in page.locator('.playing-card').evaluate_all('(els)=>els.map(e=>e.getAttribute("aria-label"))'))

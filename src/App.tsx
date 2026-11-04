@@ -1,19 +1,28 @@
+import type { GameSession, GameAction } from "./games/engine.ts";
+import {
+  reduceGame,
+  elapsedGame,
+  saveGame,
+  gameTitle,
+} from "./games/engine.ts";
+import {
+  createTable,
+  needsSpeedReset,
+  speedMoves,
+} from "./games/table/engine.ts";
+import { validTableSession } from "./games/table/validate.ts";
+import { TableView } from "./games/table/View.tsx";
+import { TableRecords } from "./games/table/Records.tsx";
+import type { Difficulty } from "./app/types.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   GameId,
-  MemoryAction,
   MemoryConfig,
-  MemorySession,
   StoredData,
   Settings,
 } from "./app/types.ts";
 import { games } from "./games/registry.ts";
-import {
-  createMemory,
-  elapsed,
-  reduceMemory,
-  snapshot,
-} from "./games/memory/engine.ts";
+import { createMemory } from "./games/memory/engine.ts";
 import { randomSeed } from "./core/cards.ts";
 import {
   loadStored,
@@ -28,9 +37,13 @@ import { PlayingCard } from "./components/PlayingCard.tsx";
 import { Dialog } from "./components/Dialog.tsx";
 const route = (): string => {
   const path = location.hash.replace(/^#\/?/, "");
-  return ["home", "games", "records", "settings", "play/memory"].includes(
-    path,
-  ) || path.startsWith("result/")
+  return [
+    "home",
+    "games",
+    "records",
+    "settings",
+    ...games.map((g) => `play/${g.id}`),
+  ].includes(path) || path.startsWith("result/")
     ? path || "home"
     : "home";
 };
@@ -50,10 +63,10 @@ const outcomes = {
 export default function App() {
   const [initial] = useState(loadStored);
   const [data, setData] = useState(initial.data);
-  const [session, setSession] = useState<MemorySession | null>(null);
+  const [session, setSession] = useState<GameSession | null>(null);
   const live = useRef<{
     data: StoredData;
-    session: MemorySession | null;
+    session: GameSession | null;
     blocked: boolean;
   }>({ data: initial.data, session: null, blocked: initial.blocked });
   const [warning, setWarning] = useState(initial.warning);
@@ -61,6 +74,9 @@ export default function App() {
   const [page, setPage] = useState(route);
   const pageRef = useRef(page);
   const [setup, setSetup] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<GameId>("memory");
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [rules, setRules] = useState<GameId | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [overwrite, setOverwrite] = useState(false);
@@ -80,7 +96,7 @@ export default function App() {
     window.scrollTo({ top: 0 });
   }, []);
   const commit = useCallback(
-    (nextData: StoredData, nextSession: MemorySession | null) => {
+    (nextData: StoredData, nextSession: GameSession | null) => {
       live.current.data = nextData;
       live.current.session = nextSession;
       setData(nextData);
@@ -93,15 +109,19 @@ export default function App() {
     [],
   );
   const act = useCallback(
-    (action: MemoryAction) => {
+    (action: GameAction) => {
       const previous = live.current.session;
       if (!previous) return;
-      const result = reduceMemory(previous, action);
+      const result = reduceGame(previous, action);
       if (!result.ok) {
         setMessage(result.error);
         return;
       }
-      if (!validSession(result.state)) {
+      if (
+        !(result.state.gameId === "memory"
+          ? validSession(result.state)
+          : validTableSession(result.state))
+      ) {
         setWarning(
           "状態に矛盾があるため操作を止めました。保存データは変更しません。",
         );
@@ -110,7 +130,7 @@ export default function App() {
       let nextData = structuredClone(live.current.data);
       if (result.state.phase === "finished")
         nextData = recordFinished(nextData, result.state);
-      else nextData.saves.memory = snapshot(result.state, Date.now());
+      else saveGame(nextData, result.state, Date.now());
       commit(nextData, result.state);
       setMessage(result.message);
       if (result.state.phase === "finished")
@@ -128,29 +148,93 @@ export default function App() {
     const t = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(t);
   }, []);
+  const requestResume = () => {
+    if (live.current.session?.gameId === "speed") setCountdown(3);
+    else act({ kind: "RESUME" });
+  };
   useEffect(() => {
-    if (!session || session.phase !== "playing" || page !== "play/memory")
+    if (countdown === null) return;
+    const t = setTimeout(() => {
+      if (countdown > 1) setCountdown(countdown - 1);
+      else {
+        setCountdown(null);
+        if (!document.hidden) act({ kind: "RESUME" });
+      }
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [countdown, act]);
+  useEffect(() => {
+    if (pending || rules || !page.startsWith("play/")) setCountdown(null);
+  }, [pending, rules, page]);
+  useEffect(() => {
+    if (!session || session.phase !== "playing" || !page.startsWith("play/"))
       return;
-    if (session.resolution === "mismatch") {
-      const t = setTimeout(() => act({ kind: "RESOLVE" }), 800);
+    if (session.gameId === "memory") {
+      if (session.resolution === "mismatch") {
+        const t = setTimeout(() => act({ kind: "RESOLVE" }), 800);
+        return () => clearTimeout(t);
+      }
+      if (session.turn === "cpu1") {
+        const t = setTimeout(() => act({ kind: "CPU" }), 600);
+        return () => clearTimeout(t);
+      }
+    } else if (session.gameId === "oldMaid" && session.turn !== "human") {
+      const t = setTimeout(() => act({ kind: "CPU" }), 700);
       return () => clearTimeout(t);
-    }
-    if (session.turn === "cpu1") {
-      const t = setTimeout(() => act({ kind: "CPU" }), 600);
+    } else if (session.gameId === "sevens" && session.turn !== "human") {
+      const delay = { easy: 1100, normal: 750, hard: 500 }[
+        session.config.difficulty
+      ];
+      const t = setTimeout(() => act({ kind: "CPU" }), delay);
       return () => clearTimeout(t);
     }
   }, [session, page, act]);
+  // One clock owner for Speed. Human input never postpones the CPU's due time.
+  const speedPhase = session?.gameId === "speed" ? session.phase : null;
+  const speedDifficulty =
+    session?.gameId === "speed" ? session.config.difficulty : null;
+  useEffect(() => {
+    if (speedPhase !== "playing" || !speedDifficulty || page !== "play/speed")
+      return;
+    const delay = { easy: 1100, normal: 700, hard: 400 }[speedDifficulty];
+    let cpuAt = Date.now() + delay;
+    let resetAt = 0;
+    const timer = setInterval(() => {
+      const current = live.current.session;
+      if (
+        !current ||
+        current.gameId !== "speed" ||
+        current.phase !== "playing" ||
+        document.hidden
+      )
+        return;
+      const now = Date.now();
+      if (needsSpeedReset(current)) {
+        if (now >= resetAt) {
+          resetAt = now + 150;
+          act({ kind: "SP_RESET" });
+        }
+        return;
+      }
+      if (now >= cpuAt) {
+        cpuAt = now + delay;
+        if (speedMoves(current.visible.cpu1, current.centers).length)
+          act({ kind: "CPU" });
+      }
+    }, 50);
+    return () => clearInterval(timer);
+  }, [speedPhase, speedDifficulty, page, act]);
   useEffect(() => {
     const onHash = () => {
       const target = route();
       const current = live.current.session;
       if (
-        pageRef.current === "play/memory" &&
-        target !== "play/memory" &&
+        pageRef.current.startsWith("play/") &&
+        target !== pageRef.current &&
         current &&
         current.phase !== "finished"
       ) {
-        history.replaceState(null, "", "#/play/memory");
+        history.replaceState(null, "", `#/${pageRef.current}`);
         if (current.phase === "playing") act({ kind: "PAUSE" });
         setPending(target);
       } else {
@@ -159,6 +243,7 @@ export default function App() {
       }
     };
     const onHidden = () => {
+      if (document.hidden) setCountdown(null);
       if (document.hidden && live.current.session?.phase === "playing")
         act({ kind: "PAUSE" });
     };
@@ -169,6 +254,7 @@ export default function App() {
     };
     const onStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) {
+        setCountdown(null);
         live.current.blocked = true;
         if (live.current.session?.phase === "playing") act({ kind: "PAUSE" });
         setWarning(
@@ -189,7 +275,7 @@ export default function App() {
   }, [act]);
   const navigate = (target: string) => {
     if (
-      page === "play/memory" &&
+      page.startsWith("play/") &&
       session &&
       session.phase !== "finished" &&
       target !== page
@@ -201,37 +287,49 @@ export default function App() {
   const leave = (save: boolean) => {
     const nextData = structuredClone(live.current.data);
     const current = live.current.session;
-    if (save && current) nextData.saves.memory = snapshot(current, Date.now());
-    else delete nextData.saves.memory;
+    if (save && current) saveGame(nextData, current, Date.now());
+    else if (current) delete nextData.saves[current.gameId];
     commit(nextData, null);
     setPending(null);
     movePage(pending ?? "home");
   };
   const start = () => {
     try {
-      const next = createMemory(config, randomSeed());
+      const next =
+        selectedGame === "memory"
+          ? createMemory(config, randomSeed())
+          : createTable(selectedGame, randomSeed(), difficulty);
       const nextData = structuredClone(live.current.data);
-      nextData.saves.memory = snapshot(next, Date.now());
+      saveGame(nextData, next, Date.now());
       commit(nextData, next);
       setSetup(false);
       setOverwrite(false);
       setMessage("同じ数字・同じ色のペアを見つけましょう。");
-      movePage("play/memory");
+      movePage(`play/${next.gameId}`);
     } catch {
       setWarning(
         "安全な乱数を利用できません。HTTPSまたはlocalhostで開いてください。",
       );
     }
   };
-  const resume = () => {
-    const saved = live.current.data.saves.memory;
-    if (!saved || !validSession(saved)) {
+  const openSetup = (id: GameId) => {
+    setSelectedGame(id);
+    setSetup(true);
+  };
+  const resume = (id: GameId = "memory") => {
+    const saved = live.current.data.saves[id];
+    if (
+      !saved ||
+      !(saved.gameId === "memory"
+        ? validSession(saved)
+        : validTableSession(saved))
+    ) {
       setWarning("この保存からは再開できません。");
       return;
     }
     commit(live.current.data, structuredClone(saved));
-    setMessage("再開ボタンを押すと、続きからプレイできます。");
-    movePage("play/memory");
+    setMessage("再開ボタンを押すと続きからプレイできます。");
+    movePage(`play/${id}`);
   };
   const settings = data.settings;
   const updateSettings = (next: Settings) =>
@@ -304,7 +402,7 @@ export default function App() {
             <br />
             あなたのペースで、ひと勝負。
           </p>
-          <small>STEP 1 · 基本実装</small>
+          <small>5 GAMES · LOCAL PLAY</small>
         </div>
       </aside>
       <div className="workspace">
@@ -365,13 +463,13 @@ export default function App() {
                       </p>
                       <button
                         className="gold-button"
-                        onClick={() => setSetup(true)}
+                        onClick={() => openSetup("memory")}
                       >
                         神経衰弱をはじめる <span>↗</span>
                       </button>
                       <div className="hero-note">
                         <span>♦</span> 登録不要 <i /> 端末内でプレイ <i />{" "}
-                        基本版
+                        5ゲーム対応
                       </div>
                     </div>
                     <div className="hero-art" aria-hidden="true">
@@ -417,14 +515,14 @@ export default function App() {
                     <div>
                       <span>保存したゲーム</span>
                       <strong>
-                        {data.saves.memory ? 1 : 0}
+                        {Object.keys(data.saves).length}
                         <small> 件</small>
                       </strong>
                     </div>
                     <div>
                       <span>現在の実装</span>
                       <strong>
-                        1 <small>/ 5ゲーム</small>
+                        5 <small>/ 5ゲーム</small>
                       </strong>
                     </div>
                   </div>
@@ -440,7 +538,9 @@ export default function App() {
                           {data.saves.memory.pairsWon.human}ペア獲得
                         </p>
                       </div>
-                      <button onClick={resume}>再開する →</button>
+                      <button onClick={() => resume("memory")}>
+                        再開する →
+                      </button>
                     </section>
                   )}
                 </>
@@ -450,7 +550,7 @@ export default function App() {
                   <p className="eyebrow">FIND YOUR FAVORITE</p>
                   <h2>今日は、どの一局にしますか。</h2>
                 </div>
-                <span className="subtle">5つのゲームを順次実装</span>
+                <span className="subtle">5つのゲームをプレイできます</span>
               </div>
               <div className="game-grid">
                 {games.map((g) => (
@@ -482,10 +582,18 @@ export default function App() {
                           g.available ? "gold-button" : "coming-button"
                         }
                         disabled={!g.available}
-                        onClick={() => setSetup(true)}
+                        onClick={() => openSetup(g.id)}
                       >
                         {g.available ? "プレイする →" : "今後の実装対象"}
                       </button>
+                      {data.saves[g.id] && (
+                        <button
+                          className="resume-game-button"
+                          onClick={() => resume(g.id)}
+                        >
+                          保存したゲームを再開 →
+                        </button>
+                      )}
                     </div>
                   </article>
                 ))}
@@ -501,8 +609,27 @@ export default function App() {
               </section>
             </>
           )}
+          {(page === "home" || page === "games") &&
+            games
+              .filter((g) => g.id !== "memory" && data.saves[g.id])
+              .map((g) => (
+                <section className="resume-card" key={g.id}>
+                  <div className="resume-symbol">{g.symbol}</div>
+                  <div>
+                    <small>WELCOME BACK</small>
+                    <h2>{g.name}の続きをプレイ</h2>
+                    <p>
+                      {formatTime(data.saves[g.id]?.clock.elapsedMs ?? 0)} ·
+                      中断データあり
+                    </p>
+                  </div>
+                  <button onClick={() => resume(g.id)}>再開する →</button>
+                </section>
+              ))}
           {page === "play/memory" &&
-            (session && session.phase !== "finished" ? (
+            (session &&
+            session.gameId === "memory" &&
+            session.phase !== "finished" ? (
               <>
                 <div className="play-heading">
                   <div>
@@ -513,7 +640,7 @@ export default function App() {
                   </div>
                   <div className="play-clock">
                     <span>PLAY TIME</span>
-                    <strong>{formatTime(elapsed(session, now))}</strong>
+                    <strong>{formatTime(elapsedGame(session, now))}</strong>
                   </div>
                 </div>
                 <div className="play-toolbar">
@@ -630,11 +757,57 @@ export default function App() {
                   保存データがあれば再開できます。新しいゲームも始められます。
                 </p>
                 {data.saves.memory && (
-                  <button onClick={resume}>保存したゲームを開く</button>
+                  <button onClick={() => resume("memory")}>
+                    保存したゲームを開く
+                  </button>
                 )}
-                <button className="gold-button" onClick={() => setSetup(true)}>
+                <button
+                  className="gold-button"
+                  onClick={() => openSetup("memory")}
+                >
                   新しくはじめる
                 </button>
+              </section>
+            ))}
+          {page.startsWith("play/") &&
+            page !== "play/memory" &&
+            (session &&
+            session.gameId !== "memory" &&
+            page === `play/${session.gameId}` &&
+            session.phase !== "finished" ? (
+              <TableView
+                session={session}
+                act={act}
+                now={now}
+                message={message}
+                countdown={countdown}
+                onResume={requestResume}
+                onQuit={() => navigate("home")}
+                onRules={() => {
+                  setCountdown(null);
+                  if (session.phase === "playing") act({ kind: "PAUSE" });
+                  setRules(session.gameId);
+                }}
+              />
+            ) : (
+              <section className="empty-state">
+                <h1>保存したゲームを再開</h1>
+                {games
+                  .filter((g) => g.id !== "memory" && page === `play/${g.id}`)
+                  .map((g) => (
+                    <div key={g.id}>
+                      <p>{g.name}</p>
+                      {data.saves[g.id] && (
+                        <button onClick={() => resume(g.id)}>再開する</button>
+                      )}
+                      <button
+                        className="gold-button"
+                        onClick={() => openSetup(g.id)}
+                      >
+                        新しくはじめる
+                      </button>
+                    </div>
+                  ))}
               </section>
             ))}
           {page.startsWith("result/") && (
@@ -644,6 +817,12 @@ export default function App() {
                   <p className="eyebrow">A GOOD GAME, WELL PLAYED.</p>
                   <div className="result-symbol">♦</div>
                   <h1>{outcomes[resultRecord.outcome]}</h1>
+                  <p>
+                    {gameTitle(resultRecord.gameId)}
+                    {resultRecord.stats.stalemate === 1
+                      ? " · 手詰まり判定"
+                      : ""}
+                  </p>
                   <p>おつかれさまでした。次の一局も、自分のペースで。</p>
                   <div className="result-metrics">
                     <div>
@@ -651,12 +830,30 @@ export default function App() {
                       <strong>{formatTime(resultRecord.elapsedMs)}</strong>
                     </div>
                     <div>
-                      <span>獲得ペア</span>
-                      <strong>{resultRecord.stats.humanPairs}</strong>
+                      <span>
+                        {resultRecord.gameId === "memory"
+                          ? "獲得ペア"
+                          : "操作回数"}
+                      </span>
+                      <strong>
+                        {resultRecord.gameId === "memory"
+                          ? resultRecord.stats.humanPairs
+                          : resultRecord.stats.moves}
+                      </strong>
                     </div>
                     <div>
-                      <span>試行回数</span>
-                      <strong>{resultRecord.stats.attempts}</strong>
+                      <span>
+                        {resultRecord.gameId === "memory"
+                          ? "試行回数"
+                          : resultRecord.stats.rank
+                            ? "着順"
+                            : "ヒント回数"}
+                      </span>
+                      <strong>
+                        {resultRecord.gameId === "memory"
+                          ? resultRecord.stats.attempts
+                          : (resultRecord.stats.rank ?? resultRecord.hints)}
+                      </strong>
                     </div>
                   </div>
                   <p className="subtle">
@@ -668,7 +865,7 @@ export default function App() {
                   </p>
                   <button
                     className="gold-button"
-                    onClick={() => setSetup(true)}
+                    onClick={() => openSetup(resultRecord.gameId)}
                   >
                     もう一度プレイ →
                   </button>
@@ -689,7 +886,7 @@ export default function App() {
               <p className="eyebrow">YOUR LOCAL RECORDS</p>
               <h1>一局ずつ、積み重ねる。</h1>
               <p className="subtle">
-                このブラウザの完了した神経衰弱のみ。中断したゲームは成績に含めません。
+                このブラウザで完了した5ゲームの記録です。中断したゲームは成績に含めません。
               </p>
               <div className="panel records-panel">
                 <div className="section-heading">
@@ -716,7 +913,7 @@ export default function App() {
                               </small>
                             </strong>
                             <p>
-                              {r.configLabel} ·{" "}
+                              {gameTitle(r.gameId)} · {r.configLabel} ·{" "}
                               {new Date(r.finishedAt).toLocaleDateString(
                                 "ja-JP",
                               )}
@@ -729,7 +926,7 @@ export default function App() {
                 )}
               </div>
               <div className="panel records-panel">
-                <h2>ローカルランキング</h2>
+                <h2>神経衰弱のローカルランキング</h2>
                 <p className="subtle">
                   同じ設定・補助なしのクリア／勝利を比較します。1人用は時間順、CPU対戦は獲得ペア数順。上位10件。
                 </p>
@@ -755,6 +952,7 @@ export default function App() {
               </div>
             </>
           )}
+          {page === "records" && <TableRecords records={data.records} />}
           {page === "settings" && (
             <>
               <p className="eyebrow">MAKE IT YOURS</p>
@@ -852,7 +1050,7 @@ export default function App() {
                     </select>
                   </label>
                   <p className="subtle">
-                    基本版は音声なし。効果音・実績は今後の実装対象です。
+                    音声なし。効果音・実績は今後の実装対象です。ゲームは5種類プレイできます。
                   </p>
                 </section>
               </div>
@@ -860,27 +1058,57 @@ export default function App() {
           )}
           <footer>
             <span>♠ CARD LOUNGE</span>
-            <span>静かな時間に、一枚の楽しみを。 · Step 1 基本版</span>
+            <span>静かな時間に、一枚の楽しみを。 · 5ゲーム対応</span>
           </footer>
         </main>
       </div>
       {setup && (
-        <Dialog title="神経衰弱のテーブル設定" onClose={() => setSetup(false)}>
+        <Dialog
+          title={`${gameTitle(selectedGame)}のテーブル設定`}
+          onClose={() => setSetup(false)}
+        >
           <p className="dialog-copy">
-            同じ数字・同じ色の2枚を見つけます。モードと枚数を選んでください。
+            {games.find((g) => g.id === selectedGame)?.rules[0]}
           </p>
-          <ConfigForm config={config} onChange={setConfig} />
+          {selectedGame === "memory" ? (
+            <ConfigForm config={config} onChange={setConfig} />
+          ) : selectedGame === "sevens" || selectedGame === "speed" ? (
+            <div className="config-form">
+              <label>
+                CPUの難易度
+                <select
+                  aria-label="CPUの難易度"
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+                >
+                  <option value="easy">初級</option>
+                  <option value="normal">中級</option>
+                  <option value="hard">上級</option>
+                </select>
+              </label>
+            </div>
+          ) : (
+            <p className="subtle">
+              {selectedGame === "klondike"
+                ? "ドロー1・山札の再循環は無制限。"
+                : "4人対戦・CPUの選択は公平なランダムです。"}
+            </p>
+          )}
           <button
             className="gold-button full-width"
             onClick={() => {
-              if (live.current.data.saves.memory) setOverwrite(true);
+              if (live.current.data.saves[selectedGame]) setOverwrite(true);
               else start();
             }}
           >
             この設定ではじめる →
           </button>
           <p className="dialog-note">
-            初級：記憶2枚 / 中級：6枚 / 上級：観測済みの全未一致札
+            {selectedGame === "memory"
+              ? "初級：記憶2枚 / 中級：6枚 / 上級：観測済みの全未一致札"
+              : selectedGame === "speed"
+                ? "AとKも隣接。再開時は3・2・1の後にプレイが始まります。"
+                : "合法手と勝利条件はルール画面で確認できます。"}
           </p>
         </Dialog>
       )}
@@ -890,7 +1118,7 @@ export default function App() {
           onClose={() => setOverwrite(false)}
         >
           <p className="dialog-copy">
-            前回の神経衰弱の中断データは、新しいゲームで置き換わります。
+            このゲームの中断データは、新しいゲームで置き換わります。他のゲームの保存は保持します。
           </p>
           <div className="dialog-actions">
             <button onClick={() => setOverwrite(false)}>キャンセル</button>

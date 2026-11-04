@@ -1,3 +1,10 @@
+import type {
+  KlondikeSession,
+  OldMaidSession,
+  SevensSession,
+  SpeedSession,
+  TableRecord,
+} from "../games/table/types.ts";
 export type GameId = "klondike" | "memory" | "oldMaid" | "sevens" | "speed";
 export type Suit = "S" | "H" | "D" | "C";
 export type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
@@ -79,7 +86,7 @@ export interface Settings {
   appTheme: "dark" | "light" | "system";
   reducedMotion: "system" | "on" | "off";
 }
-export interface GameRecord {
+export interface MemoryGameRecord {
   sessionId: string;
   gameId: "memory";
   config: MemoryConfig;
@@ -91,10 +98,17 @@ export interface GameRecord {
   stats: Record<string, number>;
   finishedAt: number;
 }
+export type GameRecord = MemoryGameRecord | TableRecord;
 export interface StoredData {
   schemaVersion: 1;
   settings: Settings;
-  saves: { memory?: MemorySession };
+  saves: {
+    memory?: MemorySession;
+    klondike?: KlondikeSession;
+    oldMaid?: OldMaidSession;
+    sevens?: SevensSession;
+    speed?: SpeedSession;
+  };
   records: GameRecord[];
   processedSessionIds: string[];
 }
