@@ -1260,6 +1260,169 @@ footer > span:first-child {
 .skip:focus {
   top: 15px;
 }
+
+/* ババ抜き: 引いた札とペアを見せる演出 */
+.om-stage {
+  min-height: 196px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  margin: 4px auto 6px;
+  max-width: 420px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  position: relative;
+}
+.om-stage.om-idle {
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+.om-stage:not(.om-idle) {
+  background: #0003;
+  border: 1px solid #d9be7a55;
+}
+.om-who {
+  margin: 0;
+  font-size: 13px;
+  color: #dce5da;
+}
+.om-note {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f4e4b6;
+  min-height: 1.4em;
+}
+.om-cards {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  min-height: 120px;
+  align-items: center;
+}
+.om-card {
+  display: inline-block;
+}
+.om-draw .om-drawn {
+  animation: om-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.om-draw .om-flip {
+  display: inline-block;
+  animation: om-flip 0.6s 0.15s ease-out both;
+}
+.om-out .om-drawn,
+.om-out .om-pair-card {
+  animation: om-away 0.5s ease-in both;
+}
+.om-has-pair.om-out .om-pair-card {
+  animation-name: om-discard;
+}
+.om-pair .om-pair-card {
+  animation: om-meet 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  box-shadow:
+    0 0 0 3px #e9c86d,
+    0 0 22px #e9c86d99;
+  border-radius: 10px;
+}
+.om-pair .om-pair-card:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.om-pair .om-note {
+  color: #ffe08a;
+  animation: om-pop 0.4s ease-out both;
+}
+.om-joker .om-note {
+  color: #ff9d8f;
+}
+.om-draw.om-joker .om-flip {
+  animation:
+    om-flip 0.6s 0.15s ease-out both,
+    om-shake 0.4s 0.75s ease-in-out;
+}
+.om-skip {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  font-size: 11px;
+  padding: 3px 9px;
+  min-height: 28px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid #d9be7a66;
+  color: #dce5da;
+  cursor: pointer;
+}
+.hand-row .om-new {
+  display: inline-block;
+  animation: om-pop 0.5s ease-out both;
+  border-radius: 10px;
+  box-shadow: 0 0 0 3px #e9c86d;
+}
+@keyframes om-in {
+  from {
+    transform: translateY(-46px) scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes om-flip {
+  0% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0);
+  }
+}
+@keyframes om-meet {
+  from {
+    transform: translateY(18px) scale(0.9);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes om-pop {
+  0% {
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes om-away {
+  to {
+    transform: translateY(40px) scale(0.8);
+    opacity: 0;
+  }
+}
+@keyframes om-discard {
+  to {
+    transform: translate(120px, 30px) rotate(18deg) scale(0.6);
+    opacity: 0;
+  }
+}
+@keyframes om-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
 .app[data-motion="on"] * {
   transition: none !important;
   animation: none !important;

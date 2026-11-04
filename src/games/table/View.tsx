@@ -12,6 +12,15 @@ import {
 } from "./engine.ts";
 import { getCard, symbols, color, rankLabel, suits } from "../../core/cards.ts";
 const names = { human: "あなた", cpu1: "CPU 1", cpu2: "CPU 2", cpu3: "CPU 3" };
+/** ババ抜きで1枚引いたあとの見せ方(画面だけの状態。保存はしない) */
+export interface OldMaidReveal {
+  seq: number;
+  actor: keyof typeof names;
+  target: keyof typeof names;
+  card: CardId;
+  pair: CardId[] | null;
+  stage: "draw" | "pair" | "out";
+}
 const format = (ms: number) =>
   `${Math.floor(ms / 60000)
     .toString()
@@ -105,6 +114,76 @@ function Back({
     </div>
   );
 }
+function OldMaidStage({
+  reveal,
+  onSkip,
+}: {
+  reveal: OldMaidReveal | null;
+  onSkip?: (() => void) | undefined;
+}) {
+  if (!reveal) return <div className="om-stage om-idle" aria-hidden="true" />;
+  const { actor, target, card, pair, stage } = reveal;
+  const joker = card === "JOKER";
+  // 引いた札を表で見せるのは「自分が引いた」「自分の札が引かれた」ときだけ(CPU同士のペアは、そろった段階で公開)
+  const open = actor === "human" || target === "human";
+  const who = `${names[actor]}が${names[target]}から1枚引きました`;
+  let note: string;
+  if (stage === "draw")
+    note =
+      actor === "human"
+        ? joker
+          ? "ジョーカーを引いてしまった…！"
+          : "引いたカードは…"
+        : target === "human"
+          ? joker
+            ? "ジョーカーを引かせました！"
+            : "あなたのカードが引かれました"
+          : "何を引いたかは分かりません";
+  else if (pair)
+    note = `${actor === "human" ? "" : names[actor] + "の"}ペアがそろった！ 捨て札へ`;
+  else
+    note =
+      actor === "human"
+        ? joker
+          ? "ジョーカーは手札に…"
+          : "そろわず、手札に加えました"
+        : "そろいませんでした";
+  return (
+    <div
+      className={`om-stage om-${stage} ${pair && stage !== "draw" ? "om-has-pair" : ""} ${joker && open ? "om-joker" : ""}`}
+      key={reveal.seq}
+      role="status"
+      aria-live="polite"
+    >
+      <p className="om-who">{who}</p>
+      <div className="om-cards">
+        {stage !== "draw" && pair ? (
+          pair.map((c) => (
+            <span className="om-card om-pair-card" key={c}>
+              <CardFace card={c} />
+            </span>
+          ))
+        ) : (
+          <span className="om-card om-drawn">
+            {open ? (
+              <span className="om-flip">
+                <CardFace card={card} />
+              </span>
+            ) : (
+              <Back index={0} label="引かれたカード(裏向き)" />
+            )}
+          </span>
+        )}
+      </div>
+      <p className="om-note">{note}</p>
+      {onSkip && (
+        <button type="button" className="om-skip" onClick={onSkip}>
+          次へ ▶
+        </button>
+      )}
+    </div>
+  );
+}
 export function TableView({
   session: s,
   act,
@@ -114,7 +193,11 @@ export function TableView({
   onRules,
   onResume,
   countdown,
+  reveal = null,
+  onSkipReveal,
 }: {
+  reveal?: OldMaidReveal | null;
+  onSkipReveal?: (() => void) | undefined;
   session: TableSession;
   act: (a: TableAction) => void;
   now: number;
@@ -352,14 +435,14 @@ export function TableView({
                 .map((p) => (
                   <div
                     key={p}
-                    className={`opponent ${s.turn === p ? "is-turn" : ""}`}
+                    className={`opponent ${(reveal ? reveal.actor : s.turn) === p ? "is-turn" : ""}`}
                   >
                     <span>{names[p]}</span>
                     <strong>{s.hands[p].length}枚</strong>
                     <small>
                       {s.finishOrder.includes(p)
                         ? "あがり"
-                        : s.turn === p
+                        : (reveal ? reveal.actor : s.turn) === p
                           ? "カードを選択中…"
                           : "待機中"}
                     </small>
@@ -367,13 +450,16 @@ export function TableView({
                 ))}
             </div>
             <h2 className="table-turn">
-              {s.turn === "human"
-                ? `${names[nextSeat("human", s.hands)]}から1枚引いてください`
-                : s.hands.human.length
-                  ? "CPUの手番です"
-                  : "あなたはあがりました。CPUの対戦を見守っています。"}
+              {reveal
+                ? "\u00a0"
+                : s.turn === "human"
+                  ? `${names[nextSeat("human", s.hands)]}から1枚引いてください`
+                  : s.hands.human.length
+                    ? "CPUの手番です"
+                    : "あなたはあがりました。CPUの対戦を見守っています。"}
             </h2>
-            {s.turn === "human" && (
+            <OldMaidStage reveal={reveal} onSkip={onSkipReveal} />
+            {s.turn === "human" && !reveal && (
               <div className="draw-row" aria-label="相手の裏向きカード">
                 {s.hands[nextSeat("human", s.hands)].map((_, i) => (
                   <Back
@@ -397,7 +483,19 @@ export function TableView({
                   (a, b) => (getCard(a).rank ?? 99) - (getCard(b).rank ?? 99),
                 )
                 .map((c) => (
-                  <CardFace key={c} card={c} />
+                  <span
+                    key={c}
+                    className={
+                      reveal &&
+                      reveal.actor === "human" &&
+                      !reveal.pair &&
+                      reveal.card === c
+                        ? "om-new"
+                        : undefined
+                    }
+                  >
+                    <CardFace card={c} />
+                  </span>
                 ))}
             </div>
             <p className="table-instruction">

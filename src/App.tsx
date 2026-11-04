@@ -12,6 +12,8 @@ import {
 } from "./games/table/engine.ts";
 import { validTableSession } from "./games/table/validate.ts";
 import { TableView } from "./games/table/View.tsx";
+import type { OldMaidReveal } from "./games/table/View.tsx";
+import { nextSeat } from "./games/table/engine.ts";
 import { TableRecords } from "./games/table/Records.tsx";
 import type { Difficulty } from "./app/types.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -77,6 +79,10 @@ export default function App() {
   const [selectedGame, setSelectedGame] = useState<GameId>("memory");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [countdown, setCountdown] = useState<number | null>(null);
+  // ババ抜き: 引く→(そろえば)ペアを見せる→捨てる、の間を置くための画面だけの状態
+  const [reveal, setReveal] = useState<OldMaidReveal | null>(null);
+  const revealSeq = useRef(0);
+  const afterReveal = useRef<string | null>(null);
   const [rules, setRules] = useState<GameId | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [overwrite, setOverwrite] = useState(false);
@@ -131,10 +137,37 @@ export default function App() {
       if (result.state.phase === "finished")
         nextData = recordFinished(nextData, result.state);
       else saveGame(nextData, result.state, Date.now());
+      let staged = false;
+      if (
+        previous.gameId === "oldMaid" &&
+        result.state.gameId === "oldMaid" &&
+        (action.kind === "CPU" || action.kind === "OM_DRAW")
+      ) {
+        const actor = previous.turn,
+          target = nextSeat(actor, previous.hands);
+        const pair = result.state.discarded.slice(previous.discarded.length);
+        const had = new Set(previous.hands[actor]);
+        const card = [...result.state.hands[actor], ...pair].find(
+          (c) => !had.has(c),
+        );
+        if (card) {
+          staged = true;
+          setReveal({
+            seq: ++revealSeq.current,
+            actor,
+            target,
+            card,
+            pair: pair.length ? pair : null,
+            stage: "draw",
+          });
+        }
+      }
       commit(nextData, result.state);
       setMessage(result.message);
-      if (result.state.phase === "finished")
-        movePage(`result/${result.state.sessionId}`);
+      if (result.state.phase === "finished") {
+        if (staged) afterReveal.current = `result/${result.state.sessionId}`;
+        else movePage(`result/${result.state.sessionId}`);
+      }
     },
     [commit, movePage],
   );
@@ -178,7 +211,11 @@ export default function App() {
         const t = setTimeout(() => act({ kind: "CPU" }), 600);
         return () => clearTimeout(t);
       }
-    } else if (session.gameId === "oldMaid" && session.turn !== "human") {
+    } else if (
+      session.gameId === "oldMaid" &&
+      session.turn !== "human" &&
+      !reveal
+    ) {
       const t = setTimeout(() => act({ kind: "CPU" }), 700);
       return () => clearTimeout(t);
     } else if (session.gameId === "sevens" && session.turn !== "human") {
@@ -188,7 +225,44 @@ export default function App() {
       const t = setTimeout(() => act({ kind: "CPU" }), delay);
       return () => clearTimeout(t);
     }
-  }, [session, page, act]);
+  }, [session, page, act, reveal]);
+  // 引いた札を見せる(0.95秒) → ペアがそろったら並べて見せる(1.3秒) → 捨て札へ(0.45秒)
+  useEffect(() => {
+    if (!reveal) return;
+    const paused =
+      live.current.session?.gameId === "oldMaid" &&
+      live.current.session.phase === "paused";
+    if (paused) return;
+    const ms =
+      reveal.stage === "draw"
+        ? 950
+        : reveal.stage === "pair"
+          ? 1300
+          : reveal.pair
+            ? 450
+            : 600;
+    const t = setTimeout(() => {
+      setReveal((r) => {
+        if (!r || r.seq !== reveal.seq) return r;
+        if (r.stage === "draw") return { ...r, stage: r.pair ? "pair" : "out" };
+        if (r.stage === "pair") return { ...r, stage: "out" };
+        return null;
+      });
+    }, ms);
+    return () => clearTimeout(t);
+  }, [reveal, session?.phase]);
+  useEffect(() => {
+    if (!reveal && afterReveal.current) {
+      const to = afterReveal.current;
+      afterReveal.current = null;
+      movePage(to);
+    }
+  }, [reveal, movePage]);
+  useEffect(() => {
+    if (!page.startsWith("play/oldMaid")) {
+      setReveal(null);
+    }
+  }, [page]);
   // One clock owner for Speed. Human input never postpones the CPU's due time.
   const speedPhase = session?.gameId === "speed" ? session.phase : null;
   const speedDifficulty =
@@ -573,9 +647,7 @@ export default function App() {
                       <p>{g.description}</p>
                       <div className="game-card-footer">
                         <span>{g.people}</span>
-                        <button onClick={() => setRules(g.id)}>
-                          ルール ↗
-                        </button>
+                        <button onClick={() => setRules(g.id)}>ルール ↗</button>
                       </div>
                       <button
                         className={
@@ -774,9 +846,12 @@ export default function App() {
             (session &&
             session.gameId !== "memory" &&
             page === `play/${session.gameId}` &&
-            session.phase !== "finished" ? (
+            (session.phase !== "finished" ||
+              (session.gameId === "oldMaid" && !!reveal)) ? (
               <TableView
                 session={session}
+                reveal={session.gameId === "oldMaid" ? reveal : null}
+                onSkipReveal={() => setReveal(null)}
                 act={act}
                 now={now}
                 message={message}
