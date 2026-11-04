@@ -18,7 +18,7 @@ npm run build
 npm run preview -- --port 3401
 ```
 
-ビルド成果物はdist/。GitHub Pagesを想定した相対baseとハッシュURL（#/play/memory等）です。file://による直接オープンは対応しません。Step 2でmainブランチを初期化し、初回コミットを作成します。Push・公開は未実施です。
+ビルド成果物はdist/。GitHub Pagesを想定した相対baseとハッシュURL（#/play/memory等）です。file://による直接オープンは対応しません。ソースはmainブランチで管理します。GitHub Actionsはmainの更新時にnpm ci・npm test・npm run buildを実行し、dist/をGitHub Pagesへ配信します。
 
 ## 今回の範囲
 
@@ -66,3 +66,13 @@ CARD_LOUNGE_BASE_URL=http://127.0.0.1:3401 python3 tests/browser.py
 ```
 
 実行証跡はdocs/TEST_REPORT.md、基本版の採用範囲はdocs/STEP1_SCOPE.mdを参照してください。
+
+## GitHub Pages の設定
+
+リポジトリの Settings → Pages → Build and deployment → Source で **GitHub Actions** を選択します。
+
+ワークフローは `.github/workflows/pages.yml`。mainへのPush、またはActions画面のRun workflowで実行。テストとビルドが成功した成果物のみ配信します。
+
+公開予定URL: https://banben18-creator.github.io/card-lounge/
+
+最初の公開はPages設定とデプロイ成功後に有効になります。React/Viteのソースをmainのルートから直接配信する設定は使用しません。
