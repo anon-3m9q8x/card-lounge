@@ -89,6 +89,6 @@ CARD_LOUNGE_BASE_URL=http://127.0.0.1:3401 python3 tests/five-games-browser.py
 
 ワークフローは `.github/workflows/pages.yml`。mainへのPush、またはActions画面のRun workflowで実行。テストとビルドが成功した成果物のみ配信します。
 
-公開URL: https://banben18-creator.github.io/card-lounge/
+公開URL: https://anon-3m9q8x.github.io/card-lounge/
 
 本番はGitHub Actionsの成功後に更新されます。React/Viteのソースをmainのルートから直接配信する設定は使用しません。
