@@ -2667,3 +2667,301 @@ footer > span:first-child {
     margin: 8px 0;
   }
 }
+/* ===== 大富豪 ===== */
+.art-daifugo {
+  background:
+    radial-gradient(ellipse at 50% 90%, #8a6c3a40, transparent 70%), #2f2a22;
+}
+.art-daifugo .mini-second {
+  color: #8b6e39;
+}
+.opponent.is-passed {
+  opacity: 0.6;
+}
+.df-field {
+  position: relative;
+  max-width: 560px;
+  margin: 6px auto 4px;
+  padding: 18px 16px 14px;
+  border: 1px dashed #d8c78f55;
+  border-radius: 14px;
+  background: #00000014;
+  text-align: center;
+  min-height: 178px;
+}
+.df-field.df-revolution {
+  border-color: #e6b8b0aa;
+  background: #5a1f2422;
+}
+.df-badges {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  min-height: 22px;
+}
+.df-badge {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #f1d088;
+  color: #3a2c10;
+  font-weight: 600;
+}
+.df-badge.quiet {
+  background: #ffffff1c;
+  color: #e5e8d8;
+  font-weight: 400;
+}
+.df-owner,
+.df-pile {
+  font-size: 11px;
+  color: #d3dfd5;
+  margin: 8px 0;
+}
+.df-cards {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.df-empty {
+  color: #d6d2b3;
+  font-size: 13px;
+  margin: 40px 0 30px;
+}
+.df-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.df-actions .table-pass {
+  margin: 14px 0 8px;
+}
+.df-play:not(:disabled) {
+  background: #f1d088;
+  font-weight: 700;
+}
+.df-hand .playing-card[aria-pressed="true"] {
+  transform: translateY(-10px);
+}
+/* ===== UNO ===== */
+.art-uno {
+  background:
+    conic-gradient(from 45deg, #b8473d55, #c99a3a55, #3f8a5d55, #3a69a855, #b8473d55),
+    #23282d;
+}
+.art-uno .mini-card {
+  color: #3a69a8;
+}
+.art-uno .mini-second {
+  color: #b8473d;
+}
+.uno-card {
+  --uno: #6b6b6b;
+  position: relative;
+  width: 72px;
+  aspect-ratio: 5/7;
+  min-height: 44px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 3px solid #f7f4e9;
+  border-radius: 9px;
+  background: var(--uno);
+  color: #fff;
+  box-shadow: 0 3px 7px #0004;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s;
+  font-family: Georgia, serif;
+}
+button.uno-card:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow: 0 7px 12px #0006;
+}
+.uno-R {
+  --uno: #b8473d;
+}
+.uno-Y {
+  --uno: #c99a3a;
+}
+.uno-G {
+  --uno: #3f8a5d;
+}
+.uno-B {
+  --uno: #3a69a8;
+}
+.uno-W {
+  --uno: #24282d;
+  background:
+    conic-gradient(from 45deg, #b8473d 0 25%, #c99a3a 0 50%, #3f8a5d 0 75%, #3a69a8 0)
+      center / 62% 46% no-repeat,
+    #24282d;
+}
+.uno-center {
+  width: 66%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #f7f4e9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 2px #00000014;
+}
+.uno-center span {
+  color: var(--uno);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+.uno-W .uno-center {
+  background: transparent;
+  box-shadow: none;
+}
+.uno-W .uno-center span {
+  color: #f7f4e9;
+  text-shadow: 0 1px 3px #0008;
+  font-size: 22px;
+}
+.uno-corner {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+.uno-corner.bottom {
+  top: auto;
+  left: auto;
+  bottom: 4px;
+  right: 6px;
+  transform: rotate(180deg);
+}
+.uno-back {
+  background:
+    repeating-linear-gradient(45deg, #ffffff10 0 2px, transparent 2px 7px),
+    #24282d;
+  border-color: #d8c391;
+}
+.uno-back-mark {
+  color: #d8c391;
+  font-size: 30px;
+}
+.legal-card .uno-card {
+  outline: 2px solid #c1df9f;
+  outline-offset: 2px;
+  box-shadow: 0 0 14px #c5de9f33;
+}
+.uno-drawn .uno-card {
+  animation: om-pop 0.5s ease-out both;
+}
+.uno-center-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 34px;
+  flex-wrap: wrap;
+  margin: 10px 0 4px;
+}
+.uno-pile {
+  text-align: center;
+}
+.uno-pile > span {
+  display: block;
+  font-size: 11px;
+  color: #d3dfd5;
+  margin-bottom: 10px;
+}
+.uno-pile .uno-card {
+  width: 92px;
+}
+.uno-pile .uno-center span {
+  font-size: 34px;
+}
+.uno-state {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  font-size: 12px;
+  color: #e5e8d8;
+}
+.uno-chip {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: var(--uno);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 32px;
+}
+.uno-event {
+  color: #f1d088;
+  font-weight: 600;
+}
+.uno-picker {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 6px auto 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #0003;
+  color: #e5e8d8;
+  font-size: 12px;
+  max-width: 560px;
+}
+.uno-picker .uno-chip {
+  min-height: 44px;
+  min-width: 64px;
+}
+.uno-hand {
+  gap: 8px;
+}
+@media (min-width: 1500px) {
+  .uno-card {
+    width: 84px;
+  }
+}
+@media (max-width: 900px) {
+  .uno-card {
+    width: 62px;
+  }
+  .uno-pile .uno-card {
+    width: 80px;
+  }
+}
+@media (max-width: 767px) {
+  .uno-card {
+    width: 56px;
+  }
+  .uno-center span {
+    font-size: 20px;
+  }
+  .uno-center-row {
+    gap: 18px;
+  }
+  .uno-pile .uno-card {
+    width: 70px;
+  }
+  .df-field {
+    min-height: 150px;
+  }
+}
+@media (max-width: 359px) {
+  .uno-card {
+    width: 50px;
+  }
+}
+.uno-card:disabled {
+  opacity: 1;
+  cursor: default;
+}

@@ -18,7 +18,7 @@ export function TableRecords({ records }: { records: GameRecord[] }) {
   );
   const ranked = [...filtered]
     .sort((a, b) =>
-      game === "sevens"
+      game === "sevens" || game === "daifugo"
         ? (a.stats.rank ?? 4) - (b.stats.rank ?? 4) || a.elapsedMs - b.elapsedMs
         : a.elapsedMs - b.elapsedMs ||
           (a.stats.moves ?? 0) - (b.stats.moves ?? 0),
@@ -48,7 +48,10 @@ export function TableRecords({ records }: { records: GameRecord[] }) {
             ))}
           </select>
         </label>
-        {(game === "sevens" || game === "speed") && (
+        {(game === "sevens" ||
+          game === "speed" ||
+          game === "daifugo" ||
+          game === "uno") && (
           <label>
             CPUの難易度
             <select
@@ -78,7 +81,9 @@ export function TableRecords({ records }: { records: GameRecord[] }) {
                 {r.stats.stalemate === 1 ? " · 手詰まり判定" : ""}
               </span>
               <strong>
-                {game === "sevens" ? `${r.stats.rank}位 · ` : ""}
+                {game === "sevens" || game === "daifugo"
+                  ? `${r.stats.rank}位 · `
+                  : ""}
                 {time(r.elapsedMs)}
               </strong>
             </li>

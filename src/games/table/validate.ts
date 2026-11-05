@@ -3,6 +3,8 @@ import { seats } from "./types.ts";
 import { makeDeck, getCard, color, suits } from "../../core/cards.ts";
 import type { CardId } from "../../app/types.ts";
 import { speedMoves } from "./engine.ts";
+import { validDaifugo } from "./daifugo.ts";
+import { validUno } from "./uno.ts";
 const object = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === "object" && !Array.isArray(v);
 const count = (v: unknown): v is number =>
@@ -78,7 +80,9 @@ function validate(v: unknown): v is TableSession {
   if (
     !object(v) ||
     v.schemaVersion !== 1 ||
-    !["klondike", "oldMaid", "sevens", "speed"].includes(String(v.gameId)) ||
+    !["klondike", "oldMaid", "sevens", "speed", "daifugo", "uno"].includes(
+      String(v.gameId),
+    ) ||
     typeof v.sessionId !== "string" ||
     !v.sessionId ||
     !["playing", "paused", "finished"].includes(String(v.phase)) ||
@@ -125,6 +129,8 @@ function validate(v: unknown): v is TableSession {
       !Object.values(v.result.stats).every(time))
   )
     return false;
+  if (v.gameId === "daifugo") return validDaifugo(v);
+  if (v.gameId === "uno") return validUno(v);
   if (v.gameId === "klondike") {
     if (
       !frame(v.frame) ||

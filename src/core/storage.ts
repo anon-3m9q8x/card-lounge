@@ -222,7 +222,9 @@ function validRecord(v: unknown): v is GameRecord {
     object(v) &&
     typeof v.sessionId === "string" &&
     ((v.gameId === "memory" && config(v.config)) ||
-      (["klondike", "oldMaid", "sevens", "speed"].includes(String(v.gameId)) &&
+      (["klondike", "oldMaid", "sevens", "speed", "daifugo", "uno"].includes(
+        String(v.gameId),
+      ) &&
         object(v.config) &&
         ["easy", "normal", "hard"].includes(String(v.config.difficulty)))) &&
     typeof v.configLabel === "string" &&
@@ -254,7 +256,15 @@ export function decodeStored(raw: string | null): {
       !object(v.saves) ||
       Object.entries(v.saves).some(
         ([k, slot]) =>
-          !["memory", "klondike", "oldMaid", "sevens", "speed"].includes(k) ||
+          ![
+            "memory",
+            "klondike",
+            "oldMaid",
+            "sevens",
+            "speed",
+            "daifugo",
+            "uno",
+          ].includes(k) ||
           !(validSession(slot) || validTableSession(slot)) ||
           slot.gameId !== k ||
           slot.phase !== "paused",

@@ -7,7 +7,8 @@ import type {
   RngState,
   Suit,
 } from "../../app/types.ts";
-export type TableGameId = "klondike" | "oldMaid" | "sevens" | "speed";
+export type TableGameId =
+  "klondike" | "oldMaid" | "sevens" | "speed" | "daifugo" | "uno";
 export type Participant = "human" | "cpu1" | "cpu2" | "cpu3";
 export const seats: Participant[] = ["human", "cpu1", "cpu2", "cpu3"];
 export interface TableConfig {
@@ -76,11 +77,45 @@ export interface SpeedSession extends TableBase {
   resetCount: number;
   lastActor: Actor | null;
 }
+/** 大富豪: 場に出ている組(最後に出した人)と、この場でパスした人 */
+export interface DaifugoField {
+  cards: CardId[];
+  by: Participant;
+}
+export interface DaifugoSession extends TableBase {
+  gameId: "daifugo";
+  hands: Record<Participant, CardId[]>;
+  field: DaifugoField | null;
+  pile: CardId[];
+  passed: Participant[];
+  turn: Participant;
+  finishOrder: Participant[];
+  revolution: boolean;
+  /** 8切り・革命などの直近の出来事(画面表示用) */
+  lastEvent: "none" | "eight" | "revolution" | "clear";
+}
+export type UnoColor = "R" | "Y" | "G" | "B";
+/** UNO札のID。例: R5-1(赤5の1枚目) RS-2(赤スキップ) RR-1(赤リバース) RD-1(赤ドロー2) W-1(ワイルド) W4-1(ワイルドドロー4) */
+export type UnoCardId = string;
+export interface UnoSession extends TableBase {
+  gameId: "uno";
+  hands: Record<Participant, UnoCardId[]>;
+  drawPile: UnoCardId[];
+  discard: UnoCardId[];
+  color: UnoColor;
+  direction: 1 | -1;
+  turn: Participant;
+  /** 手番の人が山札から引いた札(その札を出すかパスするかを選ぶ) */
+  drawn: UnoCardId | null;
+  lastEvent: "none" | "skip" | "reverse" | "draw2" | "wild" | "draw4";
+}
 export type TableSession =
   | KlondikeSession
   | OldMaidSession
   | SevensSession
-  | SpeedSession;
+  | SpeedSession
+  | DaifugoSession
+  | UnoSession;
 export type KlondikePlace =
   | { zone: "waste" }
   | { zone: "foundation"; suit: Suit }
@@ -97,7 +132,12 @@ export type TableAction =
   | { kind: "OM_DRAW"; actor: Participant; targetIndex: number }
   | { kind: "SV_PLACE"; actor: Participant; cardId: CardId }
   | { kind: "SV_PASS"; actor: Participant }
-  | { kind: "SP_PLACE"; actor: Actor; visibleIndex: number; center: Actor };
+  | { kind: "SP_PLACE"; actor: Actor; visibleIndex: number; center: Actor }
+  | { kind: "DF_PLAY"; actor: Participant; cards: CardId[] }
+  | { kind: "DF_PASS"; actor: Participant }
+  | { kind: "UN_PLAY"; actor: Participant; cardId: UnoCardId; color?: UnoColor }
+  | { kind: "UN_DRAW"; actor: Participant }
+  | { kind: "UN_PASS"; actor: Participant };
 export interface TableRecord {
   sessionId: string;
   gameId: TableGameId;

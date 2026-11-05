@@ -224,6 +224,15 @@ export default function App() {
       ];
       const t = setTimeout(() => act({ kind: "CPU" }), delay);
       return () => clearTimeout(t);
+    } else if (
+      (session.gameId === "daifugo" || session.gameId === "uno") &&
+      session.turn !== "human"
+    ) {
+      const delay = { easy: 1200, normal: 900, hard: 700 }[
+        session.config.difficulty
+      ];
+      const t = setTimeout(() => act({ kind: "CPU" }), delay);
+      return () => clearTimeout(t);
     }
   }, [session, page, act, reveal]);
   // 引いた札を見せる(0.95秒) → ペアがそろったら並べて見せる(1.3秒) → 捨て札へ(0.45秒)
@@ -476,7 +485,7 @@ export default function App() {
             <br />
             あなたのペースで、ひと勝負。
           </p>
-          <small>5 GAMES · LOCAL PLAY</small>
+          <small>{games.length} GAMES · LOCAL PLAY</small>
         </div>
       </aside>
       <div className="workspace">
@@ -543,7 +552,7 @@ export default function App() {
                       </button>
                       <div className="hero-note">
                         <span>♦</span> 登録不要 <i /> 端末内でプレイ <i />{" "}
-                        5ゲーム対応
+                        {games.length}ゲーム対応
                       </div>
                     </div>
                     <div className="hero-art" aria-hidden="true">
@@ -596,7 +605,8 @@ export default function App() {
                     <div>
                       <span>現在の実装</span>
                       <strong>
-                        5 <small>/ 5ゲーム</small>
+                        {games.filter((g) => g.available).length}{" "}
+                        <small>/ {games.length}ゲーム</small>
                       </strong>
                     </div>
                   </div>
@@ -624,7 +634,9 @@ export default function App() {
                   <p className="eyebrow">FIND YOUR FAVORITE</p>
                   <h2>今日は、どの一局にしますか。</h2>
                 </div>
-                <span className="subtle">5つのゲームをプレイできます</span>
+                <span className="subtle">
+                  {games.length}つのゲームをプレイできます
+                </span>
               </div>
               <div className="game-grid">
                 {games.map((g) => (
@@ -961,7 +973,7 @@ export default function App() {
               <p className="eyebrow">YOUR LOCAL RECORDS</p>
               <h1>一局ずつ、積み重ねる。</h1>
               <p className="subtle">
-                このブラウザで完了した5ゲームの記録です。中断したゲームは成績に含めません。
+                このブラウザで完了した全ゲームの記録です。中断したゲームは成績に含めません。
               </p>
               <div className="panel records-panel">
                 <div className="section-heading">
@@ -1125,7 +1137,8 @@ export default function App() {
                     </select>
                   </label>
                   <p className="subtle">
-                    音声なし。効果音・実績は今後の実装対象です。ゲームは5種類プレイできます。
+                    音声なし。効果音・実績は今後の実装対象です。ゲームは
+                    {games.length}種類プレイできます。
                   </p>
                 </section>
               </div>
@@ -1133,7 +1146,9 @@ export default function App() {
           )}
           <footer>
             <span>♠ CARD LOUNGE</span>
-            <span>静かな時間に、一枚の楽しみを。 · 5ゲーム対応</span>
+            <span>
+              静かな時間に、一枚の楽しみを。 · {games.length}ゲーム対応
+            </span>
           </footer>
         </main>
       </div>
@@ -1147,7 +1162,10 @@ export default function App() {
           </p>
           {selectedGame === "memory" ? (
             <ConfigForm config={config} onChange={setConfig} />
-          ) : selectedGame === "sevens" || selectedGame === "speed" ? (
+          ) : selectedGame === "sevens" ||
+            selectedGame === "speed" ||
+            selectedGame === "daifugo" ||
+            selectedGame === "uno" ? (
             <div className="config-form">
               <label>
                 CPUの難易度
@@ -1183,7 +1201,11 @@ export default function App() {
               ? "初級：記憶2枚 / 中級：6枚 / 上級：観測済みの全未一致札"
               : selectedGame === "speed"
                 ? "AとKも隣接。再開時は3・2・1の後にプレイが始まります。"
-                : "合法手と勝利条件はルール画面で確認できます。"}
+                : selectedGame === "daifugo"
+                  ? "8切り・革命あり。大富豪(1位)になれば勝利です。"
+                  : selectedGame === "uno"
+                    ? "CPUは自分の手札と、場札・各人の枚数だけを見て選びます。"
+                    : "合法手と勝利条件はルール画面で確認できます。"}
           </p>
         </Dialog>
       )}

@@ -32,11 +32,15 @@ import {
   suits,
   nextRng,
 } from "../../core/cards.ts";
+import { createDaifugo, daifugoHint, stepDaifugo } from "./daifugo.ts";
+import { createUno, unoHint, stepUno } from "./uno.ts";
 export const tableNames = {
   klondike: "ソリティア",
   oldMaid: "ババ抜き",
   sevens: "七並べ",
   speed: "スピード",
+  daifugo: "大富豪",
+  uno: "UNO",
 };
 export const tableElapsed = (s: TableBase, now: number) =>
   s.clock.elapsedMs +
@@ -119,6 +123,8 @@ export function createTable(
   sid = sessionId(),
 ): TableSession {
   const b = base(gameId, seed, difficulty, now, sid);
+  if (gameId === "daifugo") return createDaifugo(b);
+  if (gameId === "uno") return createUno(b);
   const [deck, r] = shuffle(
     makeDeck(gameId === "oldMaid").map((c) => c.id),
     b.rng,
@@ -457,6 +463,8 @@ export function tableHint(s: TableSession): string {
       return `${name(h.from)}の${h.count}枚を${name(h.to)}へ移せます。`;
     }
   }
+  if (s.gameId === "daifugo") return daifugoHint(s);
+  if (s.gameId === "uno") return unoHint(s);
   if (s.gameId === "oldMaid")
     return "次に手札が残る相手の裏向きカードから、1枚を選んでください。ジョーカーの位置は分かりません。";
   if (s.gameId === "sevens") {
@@ -527,6 +535,14 @@ export function reduceTable(
   const s = structuredClone(previous);
   s.updatedAt = now;
   let message = "カードを動かしました。";
+  if (s.gameId === "daifugo" || s.gameId === "uno") {
+    const r =
+      s.gameId === "daifugo"
+        ? stepDaifugo(s, action, now)
+        : stepUno(s, action, now);
+    if (typeof r !== "string") return fail(r.error);
+    return { ok: true, state: s, message: r };
+  }
   if (s.gameId === "klondike") {
     if (action.kind === "KL_UNDO") {
       const frame = s.undoStack.pop();

@@ -77,6 +77,12 @@ export function saveGame(data: StoredData, s: GameSession, now: number) {
       break;
     case "speed":
       data.saves.speed = gameSnapshot(s, now);
+      break;
+    case "daifugo":
+      data.saves.daifugo = gameSnapshot(s, now);
+      break;
+    case "uno":
+      data.saves.uno = gameSnapshot(s, now);
   }
 }
 export const tableConfigLabel = (id: TableGameId, c: TableConfig) =>

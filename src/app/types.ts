@@ -3,9 +3,12 @@ import type {
   OldMaidSession,
   SevensSession,
   SpeedSession,
+  DaifugoSession,
+  UnoSession,
   TableRecord,
 } from "../games/table/types.ts";
-export type GameId = "klondike" | "memory" | "oldMaid" | "sevens" | "speed";
+export type GameId =
+  "klondike" | "memory" | "oldMaid" | "sevens" | "speed" | "daifugo" | "uno";
 export type Suit = "S" | "H" | "D" | "C";
 export type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
 export type CardId = `${Suit}-${Rank}` | "JOKER";
@@ -108,6 +111,8 @@ export interface StoredData {
     oldMaid?: OldMaidSession;
     sevens?: SevensSession;
     speed?: SpeedSession;
+    daifugo?: DaifugoSession;
+    uno?: UnoSession;
   };
   records: GameRecord[];
   processedSessionIds: string[];

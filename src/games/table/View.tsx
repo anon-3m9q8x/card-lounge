@@ -10,7 +10,11 @@ import {
   speedMoves,
   needsSpeedReset,
 } from "./engine.ts";
-import { getCard, symbols, color, rankLabel, suits } from "../../core/cards.ts";
+import { getCard, symbols, rankLabel, suits } from "../../core/cards.ts";
+import { CardFace, Back } from "./Cards.tsx";
+import { DaifugoTable } from "./DaifugoView.tsx";
+import { UnoTable } from "./UnoView.tsx";
+export { CardFace };
 const names = { human: "あなた", cpu1: "CPU 1", cpu2: "CPU 2", cpu3: "CPU 3" };
 /** ババ抜きで1枚引いたあとの見せ方(画面だけの状態。保存はしない) */
 export interface OldMaidReveal {
@@ -28,92 +32,6 @@ const format = (ms: number) =>
       2,
       "0",
     )}:${(Math.floor(ms / 1000) % 60).toString().padStart(2, "0")}`;
-function Face({ card }: { card: CardId }) {
-  const c = getCard(card);
-  const rank = c.rank ? rankLabel(c.rank) : "J";
-  const sym = c.suit ? symbols[c.suit] : "★";
-  return (
-    <>
-      <span className="card-corner">
-        {rank}
-        <small>{sym}</small>
-      </span>
-      <span className="card-pip" aria-hidden="true">
-        {sym}
-      </span>
-      <span className="card-corner bottom" aria-hidden="true">
-        {rank}
-        <small>{sym}</small>
-      </span>
-    </>
-  );
-}
-export function CardFace({
-  card,
-  onClick,
-  disabled = false,
-  selected = false,
-  label,
-}: {
-  card: CardId;
-  onClick?: () => void;
-  disabled?: boolean;
-  selected?: boolean;
-  label?: string;
-}) {
-  const c = getCard(card);
-  const cls = `playing-card face-up ${c.suit ? color(c.suit) : "red"} ${selected ? "card-selected" : ""}`;
-  const name =
-    label ??
-    (c.suit ? `${symbols[c.suit]} ${rankLabel(c.rank ?? 0)}` : "ジョーカー");
-  return onClick ? (
-    <button
-      className={cls}
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={name}
-      aria-pressed={selected}
-    >
-      <Face card={card} />
-    </button>
-  ) : (
-    <div className={cls} role="img" aria-label={name}>
-      <Face card={card} />
-    </div>
-  );
-}
-function Back({
-  index,
-  onClick,
-  disabled,
-  label,
-}: {
-  index: number;
-  onClick?: () => void;
-  disabled?: boolean;
-  label?: string;
-}) {
-  const cls = "playing-card face-down";
-  const content = (
-    <span className="card-pattern" aria-hidden="true">
-      <span>♠</span>
-    </span>
-  );
-  return onClick ? (
-    <button
-      className={cls}
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label ?? `裏向きカード ${index + 1}番`}
-    >
-      {content}
-    </button>
-  ) : (
-    <div className={cls} role="img" aria-label={label ?? "裏向きカード"}>
-      {content}
-    </div>
-  );
-}
 function OldMaidStage({
   reveal,
   onSkip,
@@ -704,6 +622,10 @@ export function TableView({
             </p>
           </>
         )}
+        {s.gameId === "daifugo" && (
+          <DaifugoTable s={s} act={act} playing={playing} />
+        )}
+        {s.gameId === "uno" && <UnoTable s={s} act={act} playing={playing} />}
         {s.phase === "paused" && (
           <div className="pause-overlay">
             <span>{countdown ?? "Ⅱ"}</span>
